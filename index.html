@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Synchronized Pro Carousel</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <div class="ui-overlay">
+        <div class="nav-controls">
+            <div class="btn" id="prev-btn"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></div>
+            <div class="btn" id="next-btn"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
+        </div>
+        <div class="pagination-bar" id="pill">
+            <div class="dot active"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "gsap": "https://cdn.skypack.dev/gsap"
+            }
+        }
+    </script>
+    <script type="module" src="carousel.js"></script>
+</body>
+</html>

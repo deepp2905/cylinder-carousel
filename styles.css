@@ -1,0 +1,86 @@
+:root {
+    --bg: #F5F5F7;
+    --glass: rgba(255, 255, 255, 0.75);
+    --glass-border: rgba(0, 0, 0, 0.08);
+    --ui-dark: #1D1D1F;
+    --dot-inactive: rgba(0, 0, 0, 0.12);
+}
+
+body {
+    margin: 0;
+    overflow: hidden;
+    background: var(--bg);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    user-select: none;
+    touch-action: none;
+}
+
+canvas { display: block; }
+
+.ui-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    padding-bottom: 40px;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+.nav-controls {
+    position: absolute;
+    top: 50%;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 40px;
+    box-sizing: border-box;
+    transform: translateY(-50%);
+}
+
+.btn {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--glass);
+    backdrop-filter: blur(30px) saturate(180%);
+    -webkit-backdrop-filter: blur(30px) saturate(180%);
+    border: 0.5px solid var(--glass-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    pointer-events: all;
+    transition: transform 0.1s cubic-bezier(0, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    color: var(--ui-dark);
+}
+.btn:hover { background: rgba(255, 255, 255, 0.95); transform: scale(1.06); }
+.btn:active { transform: scale(0.92); }
+.btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+
+.pagination-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--glass);
+    backdrop-filter: blur(30px) saturate(180%);
+    -webkit-backdrop-filter: blur(30px) saturate(180%);
+    padding: 0 16px;
+    height: 30px;
+    border-radius: 100px;
+    border: 0.5px solid var(--glass-border);
+    pointer-events: all;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+}
+
+.dot {
+    width: 5px; height: 5px; border-radius: 10px;
+    background: var(--dot-inactive);
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+}
+.dot.active { width: 18px; background: var(--ui-dark); }
