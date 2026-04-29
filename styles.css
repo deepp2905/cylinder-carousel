@@ -5,6 +5,10 @@
     --ui-dark: #1D1D1F;
     --text-main: #111111;
     --text-muted: #888888;
+
+    /* Dynamic UI Positioning Variables */
+    --arrow-pad: 40px;
+    --pill-bottom: 40px;
 }
 
 body {
@@ -27,7 +31,7 @@ canvas:active { cursor: grabbing; }
     flex-direction: column;
     justify-content: flex-end;
     align-items: center;
-    padding-bottom: 40px;
+    padding-bottom: var(--pill-bottom);
     pointer-events: none;
     z-index: 100;
 }
@@ -38,7 +42,7 @@ canvas:active { cursor: grabbing; }
     width: 100%;
     display: flex;
     justify-content: space-between;
-    padding: 0 40px;
+    padding: 0 var(--arrow-pad);
     box-sizing: border-box;
     transform: translateY(-50%);
 }
@@ -62,7 +66,17 @@ canvas:active { cursor: grabbing; }
 }
 .btn:hover { transform: scale(1.06); background: rgba(255,255,255,0.95); }
 .btn:active { transform: scale(0.94); }
-.btn svg { fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Line arrows */
+.btn svg {
+    width: 22px;
+    height: 22px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
 
 .pagination-bar {
     display: flex;
@@ -113,7 +127,6 @@ canvas:active { cursor: grabbing; }
     flex-direction: column;
     box-shadow: 0 20px 40px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.03);
 
-    /* Fast 200ms Pop-up Animation */
     opacity: 0;
     visibility: hidden;
     transform: translateY(10px) scale(0.98);
@@ -121,7 +134,6 @@ canvas:active { cursor: grabbing; }
     pointer-events: none;
     transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
 }
-
 #settings-panel.open {
     opacity: 1;
     visibility: visible;
@@ -142,14 +154,16 @@ canvas:active { cursor: grabbing; }
     margin-right: -4px;
 }
 
-.control-group { margin-bottom: 20px; }
+.control-group { margin-bottom: 16px; }
 .control-label {
     display: flex;
     justify-content: space-between;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 500;
     color: var(--text-muted);
     margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 .control-val {
     color: var(--text-main);
@@ -164,12 +178,12 @@ input[type="range"] {
     background: rgba(0,0,0,0.08);
     border-radius: 10px;
     outline: none;
-    margin: 8px 0;
+    margin: 6px 0;
 }
 input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
     background: #fff;
     box-shadow: 0 2px 6px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05);
@@ -178,9 +192,9 @@ input[type="range"]::-webkit-slider-thumb {
 }
 input[type="range"]::-webkit-slider-thumb:active { transform: scale(0.9); }
 
-hr { border: none; border-top: 1px solid rgba(0,0,0,0.08); margin: 24px 0; }
+hr { border: none; border-top: 1px solid rgba(0,0,0,0.08); margin: 20px 0; }
 
-/* --- Dynamic Content Manager --- */
+/* Content Manager */
 .upload-global-btn {
     display: block;
     width: 100%;
@@ -204,7 +218,6 @@ hr { border: none; border-top: 1px solid rgba(0,0,0,0.08); margin: 24px 0; }
     gap: 10px;
     margin-top: 16px;
 }
-
 .grid-item {
     position: relative;
     aspect-ratio: 16/9;
@@ -212,9 +225,7 @@ hr { border: none; border-top: 1px solid rgba(0,0,0,0.08); margin: 24px 0; }
     overflow: hidden;
     background: #e0e0e0;
     border: 1px solid var(--glass-border);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
-
 .grid-item img,
 .grid-item video {
     width: 100%;
@@ -240,7 +251,6 @@ hr { border: none; border-top: 1px solid rgba(0,0,0,0.08); margin: 24px 0; }
     cursor: pointer;
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
-    transition: background 0.2s;
 }
 .del-btn:hover { background: rgba(255, 59, 48, 0.9); }
 
