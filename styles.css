@@ -1,9 +1,9 @@
 :root {
     --bg: #F5F5F7;
-    --glass: rgba(255, 255, 255, 0.75);
+    --glass: rgba(255, 255, 255, 0.8);
     --glass-border: rgba(0, 0, 0, 0.08);
     --ui-dark: #1D1D1F;
-    --dot-inactive: rgba(0, 0, 0, 0.12);
+    --dot-inactive: rgba(0, 0, 0, 0.15);
 }
 
 body {
@@ -15,7 +15,8 @@ body {
     touch-action: none;
 }
 
-canvas { display: block; }
+canvas { display: block; cursor: grab; }
+canvas:active { cursor: grabbing; }
 
 .ui-overlay {
     position: absolute;
@@ -26,7 +27,7 @@ canvas { display: block; }
     align-items: center;
     padding-bottom: 40px;
     pointer-events: none;
-    z-index: 1000;
+    z-index: 100;
 }
 
 .nav-controls {
@@ -45,42 +46,106 @@ canvas { display: block; }
     height: 52px;
     border-radius: 50%;
     background: var(--glass);
-    backdrop-filter: blur(30px) saturate(180%);
-    -webkit-backdrop-filter: blur(30px) saturate(180%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border: 0.5px solid var(--glass-border);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     pointer-events: all;
-    transition: transform 0.1s cubic-bezier(0, 0, 0.2, 1);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     color: var(--ui-dark);
 }
-.btn:hover { background: rgba(255, 255, 255, 0.95); transform: scale(1.06); }
+.btn:hover { background: #fff; transform: scale(1.08); }
 .btn:active { transform: scale(0.92); }
-.btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.btn svg { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; }
 
 .pagination-bar {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     background: var(--glass);
-    backdrop-filter: blur(30px) saturate(180%);
-    -webkit-backdrop-filter: blur(30px) saturate(180%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     padding: 0 16px;
-    height: 30px;
+    height: 32px;
     border-radius: 100px;
     border: 0.5px solid var(--glass-border);
     pointer-events: all;
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
 }
 
 .dot {
-    width: 5px; height: 5px; border-radius: 10px;
+    width: 6px; height: 6px; border-radius: 10px;
     background: var(--dot-inactive);
-    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.5s ease;
     pointer-events: none;
 }
 .dot.active { width: 18px; background: var(--ui-dark); }
+
+/* Settings Panel */
+#settings-toggle {
+    position: absolute;
+    bottom: 30px;
+    left: 30px;
+    z-index: 1000;
+}
+
+#settings-panel {
+    position: absolute;
+    top: 20px;
+    left: -400px;
+    width: 320px;
+    bottom: 20px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    border: 0.5px solid var(--glass-border);
+    border-radius: 24px;
+    padding: 24px;
+    z-index: 999;
+    overflow-y: auto;
+    transition: left 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: all;
+    box-shadow: 20px 0 50px rgba(0,0,0,0.08);
+}
+#settings-panel.open { left: 20px; }
+
+h3 { margin: 0 0 20px 0; font-size: 18px; font-weight: 600; color: #111; }
+.control-group { margin-bottom: 20px; }
+label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    font-weight: 700;
+    color: #666;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+input[type="range"] { width: 100%; cursor: pointer; accent-color: #111; }
+
+.item-row {
+    background: rgba(0,0,0,0.03);
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    border: 1px solid rgba(0,0,0,0.04);
+}
+.item-row select {
+    width: 100%;
+    margin-top: 8px;
+    padding: 6px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    background: #fff;
+}
+.item-row input[type="file"] { width: 100%; margin-top: 8px; font-size: 11px; }
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 10px; }
