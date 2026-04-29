@@ -5,6 +5,7 @@
     --ui-dark: #1D1D1F;
     --text-main: #111111;
     --text-muted: #888888;
+    --dot-inactive: rgba(0, 0, 0, 0.15);
 
     /* Dynamic UI Positioning Variables */
     --arrow-pad: 40px;
@@ -60,7 +61,7 @@ canvas:active { cursor: grabbing; }
     justify-content: center;
     cursor: pointer;
     pointer-events: all;
-    transition: transform 0.1s ease, background 0.15s ease;
+    transition: transform 0.15s ease, background 0.15s ease;
     box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     color: var(--ui-dark);
 }
@@ -77,6 +78,35 @@ canvas:active { cursor: grabbing; }
     stroke-linecap: round;
     stroke-linejoin: round;
 }
+
+/* Bottom Controls */
+.bottom-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    pointer-events: none;
+}
+
+.btn-small {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--glass);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border: 1px solid var(--glass-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    pointer-events: all;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    color: var(--dot-inactive);
+}
+.btn-small:hover { transform: scale(1.08); background: rgba(255,255,255,0.95); color: var(--ui-dark); }
+.btn-small:active { transform: scale(0.92); }
+.btn-small svg { width: 12px; height: 12px; fill: currentColor; }
 
 .pagination-bar {
     display: flex;
@@ -96,11 +126,22 @@ canvas:active { cursor: grabbing; }
 
 .dot {
     width: 6px; height: 6px; border-radius: 10px;
-    background: rgba(0,0,0,0.15);
-    transition: all 0.4s ease;
+    background: var(--dot-inactive);
+    transition: width 0.4s ease;
     pointer-events: none;
+    position: relative;
+    overflow: hidden;
 }
-.dot.active { width: 18px; background: var(--ui-dark); }
+.dot.active { width: 24px; background: var(--dot-inactive); }
+.dot .progress {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 0%;
+    background: var(--ui-dark);
+    border-radius: 10px;
+}
 
 /* --- Settings Panel --- */
 #settings-toggle {
@@ -180,17 +221,20 @@ input[type="range"] {
     outline: none;
     margin: 6px 0;
 }
-input[type="range"]::-webkit-slider-thumb {
+input[type="range"]::-webkit-slider-thumb,
+input[type="range"]::-moz-range-thumb {
     -webkit-appearance: none;
     width: 18px;
     height: 18px;
     border-radius: 50%;
+    border: none;
     background: #fff;
     box-shadow: 0 2px 6px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05);
     cursor: grab;
     transition: transform 0.1s;
 }
-input[type="range"]::-webkit-slider-thumb:active { transform: scale(0.9); cursor: grabbing; }
+input[type="range"]::-webkit-slider-thumb:active,
+input[type="range"]::-moz-range-thumb:active { transform: scale(0.9); cursor: grabbing; }
 
 hr { border: none; border-top: 1px solid rgba(0,0,0,0.08); margin: 20px 0; }
 
@@ -231,12 +275,6 @@ hr { border: none; border-top: 1px solid rgba(0,0,0,0.08); margin: 20px 0; }
     width: 100%;
     height: 100%;
     object-fit: cover;
-    display: block;
-}
-.grid-item .blank-preview {
-    width: 100%;
-    height: 100%;
-    background: #ffffff;
     display: block;
 }
 

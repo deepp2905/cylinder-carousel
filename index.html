@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zero-Dependency Pro Carousel</title>
+    <title>3d Cylinder Carousel in WebGL</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -15,13 +15,14 @@
     <div id="settings-panel">
         <h3 class="panel-header">Carousel Configuration</h3>
         <div class="panel-scroll">
+
             <div class="control-label" style="color:var(--text-main); margin-bottom:12px;">Geometry & Camera</div>
             <div class="control-group">
                 <div class="control-label"><span>Camera Z Distance</span> <span class="control-val" id="val-cameraZ">12.0</span></div>
                 <input type="range" id="param-cameraZ" min="6" max="30" step="0.5" value="12.0">
             </div>
             <div class="control-group">
-                <div class="control-label"><span>Image Height</span> <span class="control-val" id="val-height">2.2</span></div>
+                <div class="control-label"><span>Max Height</span> <span class="control-val" id="val-height">2.2</span></div>
                 <input type="range" id="param-height" min="1" max="5" step="0.1" value="2.2">
             </div>
             <div class="control-group">
@@ -29,12 +30,16 @@
                 <input type="range" id="param-radius" min="2" max="15" step="0.1" value="3.5">
             </div>
             <div class="control-group">
-                <div class="control-label"><span>Wrapper Corner Radius</span> <span class="control-val" id="val-cornerRadius">0.05</span></div>
+                <div class="control-label"><span>Corner Radius</span> <span class="control-val" id="val-cornerRadius">0.05</span></div>
                 <input type="range" id="param-cornerRadius" min="0" max="0.5" step="0.01" value="0.05">
             </div>
 
             <hr>
-            <div class="control-label" style="color:var(--text-main); margin-bottom:12px;">Interface Spacing</div>
+            <div class="control-label" style="color:var(--text-main); margin-bottom:12px;">Interface & Timing</div>
+            <div class="control-group">
+                <div class="control-label"><span>Autoplay Timer</span> <span class="control-val" id="val-autoDur">3.0s</span></div>
+                <input type="range" id="param-autoDur" min="1" max="10" step="0.5" value="3">
+            </div>
             <div class="control-group">
                 <div class="control-label"><span>Arrow Spacing (LR)</span> <span class="control-val" id="val-arrowPad">40px</span></div>
                 <input type="range" id="param-arrowPad" min="10" max="200" step="1" value="40">
@@ -73,14 +78,20 @@
             <button class="btn" id="prev-btn"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
             <button class="btn" id="next-btn"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></button>
         </div>
-        <div class="pagination-bar" id="pill"></div>
+
+        <div class="bottom-controls">
+            <button class="btn-small" id="autoplay-toggle">
+                <svg viewBox="0 0 24 24" id="icon-pause"><path d="M6 4h4v16H6zm8 0h4v16h-4z"/></svg>
+            </button>
+            <div class="pagination-bar" id="pill"></div>
+        </div>
     </div>
 
     <script type="importmap">
         {
             "imports": {
                 "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-                "gsap": "https://cdn.skypack.dev/gsap"
+                "framer-motion": "https://esm.sh/framer-motion@11.0.8"
             }
         }
     </script>

@@ -1,50 +1,71 @@
 import * as THREE from 'three';
-import gsap from 'gsap';
+import { animate } from 'framer-motion';
 
 // --- Config Engine ---
 let config = {
     count: 4, height: 2.2, aspect: 16/9, radius: 4.0, cameraZ: 12,
-    cornerRadius: 0.05, audioHigh: 140, audioLow: 40, audioDur: 0.04
+    cornerRadius: 0.05, audioHigh: 140, audioLow: 40, audioDur: 0.04,
+    autoDur: 3.0
 };
 
-// Zero-Dependency Defaults (4 Blank White Screens)
 const defaultTemplates = [
-    { type: 'blank' }, { type: 'blank' }, { type: 'blank' }, { type: 'blank' }
+    { type: 'image', url: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=1200', isLocal: false },
+    { type: 'image', url: 'https://images.unsplash.com/photo-1501854140801-50d01698950b?q=80&w=1200', isLocal: false },
+    { type: 'image', url: 'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?q=80&w=1200', isLocal: false },
+    { type: 'image', url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=1200', isLocal: false }
 ];
 
 let items = [...defaultTemplates];
 let isUsingDefaults = true;
 
-// --- Procedural Textures ---
-function createBlankTexture() {
-    const canvas = document.createElement('canvas');
-    canvas.width = 16; canvas.height = 9;
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(0, 0, 16, 9);
-    const tex = new THREE.CanvasTexture(canvas);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    return tex;
+// --- Animation References ---
+let rotAnim = null;
+let autoplayAnim = null;
+
+// --- Autoplay State ---
+let isAutoplayPaused = false;
+
+const svgPlay = `<svg viewBox="0 0 24 24"><path d="M5 3l14 9-14 9V3z"/></svg>`;
+const svgPause = `<svg viewBox="0 0 24 24"><path d="M6 4h4v16H6zm8 0h4v16h-4z"/></svg>`;
+
+document.getElementById('autoplay-toggle').onclick = () => {
+    isAutoplayPaused = !isAutoplayPaused;
+    document.getElementById('autoplay-toggle').innerHTML = isAutoplayPaused ? svgPlay : svgPause;
+    if (isAutoplayPaused) {
+        if (autoplayAnim) autoplayAnim.stop();
+        const activeProgress = document.querySelector('.dot.active .progress');
+        if (activeProgress) activeProgress.style.width = '100%';
+    } else {
+        if (!isMoving && !isDragging) startAutoplay();
+    }
+};
+
+function stopAutoplay() {
+    if (autoplayAnim) autoplayAnim.stop();
+    document.querySelectorAll('.dot .progress').forEach(p => p.style.width = '0%');
 }
 
-function createVideoTexture(url, meshUniforms) {
-    const vid = document.createElement('video');
-    vid.src = url; vid.crossOrigin = 'Anonymous'; vid.loop = true;
-    vid.muted = true; vid.playsInline = true; vid.autoplay = true;
-    vid.addEventListener('loadedmetadata', () => {
-        meshUniforms.uTexAspect.value = vid.videoWidth / vid.videoHeight;
+function startAutoplay() {
+    stopAutoplay();
+    if (config.count <= 1 || isAutoplayPaused) return;
+
+    const activeProgress = document.querySelector('.dot.active .progress');
+    if (!activeProgress) return;
+
+    autoplayAnim = animate(0, 100, {
+        duration: config.autoDur,
+        ease: [0.4, 0.0, 0.2, 1],
+        onUpdate: (v) => { activeProgress.style.width = `${v}%`; },
+        onComplete: () => { animateTo(currentTargetIndex - 1); }
     });
-    vid.play().catch(() => {});
-    const tex = new THREE.VideoTexture(vid);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    tex.minFilter = THREE.LinearFilter; tex.magFilter = THREE.LinearFilter;
-    return tex;
 }
 
-// --- Audio Engine ---
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+// --- Audio Engine (Arrows & Keyboard Only) ---
+let audioCtx = null;
 function playClick() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     if (audioCtx.state === 'suspended') audioCtx.resume();
+
     const t = audioCtx.currentTime;
 
     const noise = audioCtx.createBufferSource();
@@ -93,35 +114,23 @@ const vertexShader = `
 `;
 
 const fragmentShader = `
-    uniform sampler2D uTex;
-    uniform float uOpacity;
-    uniform float uPlaneAspect;
-    uniform float uTexAspect;
-    uniform float uCornerRadius;
-    varying vec2 vUv;
-
+    uniform sampler2D uTex; uniform float uOpacity; uniform float uPlaneAspect;
+    uniform float uTexAspect; uniform float uCornerRadius; varying vec2 vUv;
     float sdRoundedBox(vec2 p, vec2 b, float r) {
         vec2 q = abs(p) - b + vec2(r);
         return min(max(q.x, q.y), 0.0) + length(max(q, vec2(0.0))) - r;
     }
-
     void main() {
-        // Object Fit: Contain
         vec2 fitUv = vUv - 0.5;
-        if (uPlaneAspect > uTexAspect) {
-            fitUv.x *= uPlaneAspect / uTexAspect;
-        } else {
-            fitUv.y *= uTexAspect / uPlaneAspect;
-        }
+        if (uPlaneAspect > uTexAspect) fitUv.x *= uPlaneAspect / uTexAspect;
+        else fitUv.y *= uTexAspect / uPlaneAspect;
         fitUv += 0.5;
 
         vec4 texColor = texture2D(uTex, fitUv);
-
         float maskX = step(0.0, fitUv.x) * step(fitUv.x, 1.0);
         float maskY = step(0.0, fitUv.y) * step(fitUv.y, 1.0);
         texColor *= (maskX * maskY);
 
-        // Corner Radius Mask
         vec2 p = (vUv - 0.5) * vec2(uPlaneAspect, 1.0);
         vec2 b = vec2(uPlaneAspect, 1.0) * 0.5;
         float d = sdRoundedBox(p, b, uCornerRadius);
@@ -134,6 +143,18 @@ const fragmentShader = `
 const meshes = [];
 const textureLoader = new THREE.TextureLoader();
 
+function createVideoTexture(url, meshUniforms) {
+    const vid = document.createElement('video');
+    vid.src = url; vid.crossOrigin = 'Anonymous'; vid.loop = true;
+    vid.muted = true; vid.playsInline = true; vid.autoplay = true;
+    vid.addEventListener('loadedmetadata', () => { meshUniforms.uTexAspect.value = vid.videoWidth / vid.videoHeight; });
+    vid.play().catch(() => {});
+    const tex = new THREE.VideoTexture(vid);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.minFilter = THREE.LinearFilter; tex.magFilter = THREE.LinearFilter;
+    return tex;
+}
+
 function updateRadiusForCount() {
     const minRadius = config.height * config.aspect * 0.7;
     const calculated = (config.count * (config.height * config.aspect)) / (2 * Math.PI) + 0.3;
@@ -142,13 +163,23 @@ function updateRadiusForCount() {
     document.getElementById('val-radius').innerText = config.radius.toFixed(1);
 }
 
+function stopAllMeshAnimations() {
+    meshes.forEach(m => {
+        if (m.userData.opAnim) m.userData.opAnim.stop();
+        if (m.userData.bendAnim) m.userData.bendAnim.stop();
+    });
+}
+
 function rebuildCarousel() {
+    stopAutoplay();
+    if (rotAnim) rotAnim.stop();
+    stopAllMeshAnimations();
+
     while (carouselGroup.children.length > 0) {
         const child = carouselGroup.children[0];
         child.geometry.dispose();
         if (child.material.uniforms.uTex.value) child.material.uniforms.uTex.value.dispose();
-        child.material.dispose();
-        carouselGroup.remove(child);
+        child.material.dispose(); carouselGroup.remove(child);
     }
     meshes.length = 0;
 
@@ -156,38 +187,28 @@ function rebuildCarousel() {
 
     for (let i = 0; i < config.count; i++) {
         const item = items[i];
-
         const uniforms = {
-            uBend: { value: 0 },
-            uRadius: { value: config.radius },
-            uTex: { value: null },
-            uOpacity: { value: i === 0 ? 1 : 0 },
-            uPlaneAspect: { value: config.aspect },
-            uTexAspect: { value: 16/9 },
-            uCornerRadius: { value: config.cornerRadius }
+            uBend: { value: 0 }, uRadius: { value: config.radius }, uTex: { value: null },
+            uOpacity: { value: i === 0 ? 1 : 0 }, uPlaneAspect: { value: config.aspect },
+            uTexAspect: { value: 1.0 }, uCornerRadius: { value: config.cornerRadius }
         };
 
-        if (item.type === 'video') {
-            uniforms.uTex.value = createVideoTexture(item.url, uniforms);
-        } else if (item.type === 'image') {
+        if (item.type === 'video') uniforms.uTex.value = createVideoTexture(item.url, uniforms);
+        else {
             uniforms.uTex.value = textureLoader.load(item.url, (tex) => {
                 uniforms.uTexAspect.value = tex.image.width / tex.image.height;
             });
-        } else {
-            uniforms.uTex.value = createBlankTexture();
         }
 
         const mat = new THREE.ShaderMaterial({
-            uniforms: uniforms,
-            vertexShader, fragmentShader, transparent: true, side: THREE.DoubleSide, depthWrite: false
+            uniforms: uniforms, vertexShader, fragmentShader, transparent: true, side: THREE.DoubleSide, depthWrite: false
         });
 
         const mesh = new THREE.Mesh(new THREE.PlaneGeometry(width, config.height, 80, 1), mat);
         const theta = (i / config.count) * Math.PI * 2;
         mesh.position.set(Math.sin(theta) * config.radius, 0, Math.cos(theta) * config.radius);
         mesh.rotation.y = theta;
-        carouselGroup.add(mesh);
-        meshes.push(mesh);
+        carouselGroup.add(mesh); meshes.push(mesh);
     }
 
     const pill = document.getElementById('pill');
@@ -195,27 +216,23 @@ function rebuildCarousel() {
     for (let i = 0; i < config.count; i++) {
         const d = document.createElement('div');
         d.className = 'dot' + (i === 0 ? ' active' : '');
+        const p = document.createElement('div');
+        p.className = 'progress';
+        d.appendChild(p);
         pill.appendChild(d);
     }
 
     rotationY = 0; currentTargetIndex = 0; carouselGroup.rotation.y = 0; updateUI();
+    setVisualState(false);
 }
 
-// --- Grid Manager ---
+// --- Content Manager ---
 function renderGrid() {
-    const grid = document.getElementById('media-grid');
-    grid.innerHTML = '';
+    const grid = document.getElementById('media-grid'); grid.innerHTML = '';
     items.forEach((item, idx) => {
-        const div = document.createElement('div');
-        div.className = 'grid-item';
-
-        let mediaHTML = '';
-        if (item.type === 'video') mediaHTML = `<video src="${item.url}" muted playsinline></video>`;
-        else if (item.type === 'image') mediaHTML = `<img src="${item.url}">`;
-        else mediaHTML = `<div class="blank-preview"></div>`;
-
+        const div = document.createElement('div'); div.className = 'grid-item';
         div.innerHTML = `
-            ${mediaHTML}
+            ${item.type === 'video' ? `<video src="${item.url}" muted playsinline></video>` : `<img src="${item.url}">`}
             <div class="del-btn" data-idx="${idx}">×</div>
         `;
         grid.appendChild(div);
@@ -227,77 +244,94 @@ function renderGrid() {
 }
 
 document.getElementById('global-upload').addEventListener('change', (e) => {
-    const files = Array.from(e.target.files);
-    if (!files.length) return;
+    const files = Array.from(e.target.files); if (!files.length) return;
     if (isUsingDefaults) { items = []; isUsingDefaults = false; }
-    files.forEach(file => {
-        items.push({ type: file.type.startsWith('video/') ? 'video' : 'image', url: URL.createObjectURL(file), isLocal: true });
-    });
-    config.count = items.length;
-    updateRadiusForCount(); renderGrid(); rebuildCarousel(); e.target.value = '';
+    files.forEach(f => items.push({ type: f.type.startsWith('video/') ? 'video' : 'image', url: URL.createObjectURL(f), isLocal: true }));
+    config.count = items.length; updateRadiusForCount(); renderGrid(); rebuildCarousel(); e.target.value = '';
 });
 
 function deleteItem(idx) {
     if (items[idx].isLocal) URL.revokeObjectURL(items[idx].url);
     items.splice(idx, 1);
     if (items.length === 0) { isUsingDefaults = true; items = [...defaultTemplates]; }
-    config.count = items.length;
-    updateRadiusForCount(); renderGrid(); rebuildCarousel();
+    config.count = items.length; updateRadiusForCount(); renderGrid(); rebuildCarousel();
 }
 
-// --- Interaction Logic ---
-let rotationY = 0, lastTriggeredTick = 0, isDragging = false, isMoving = false, lastX = 0, currentTargetIndex = 0;
+// --- Core Motion Logic ---
+let rotationY = 0, isDragging = false, isMoving = false, lastX = 0, currentTargetIndex = 0;
+const step = (Math.PI * 2) / config.count;
 
 function getActiveIndex() {
-    const step = (Math.PI * 2) / config.count;
-    return (config.count - (((Math.round(rotationY / step) % config.count) + config.count) % config.count)) % config.count;
+    return ((Math.round(-rotationY / step) % config.count) + config.count) % config.count;
 }
 
 function updateUI() {
     const visualIdx = getActiveIndex();
-    document.querySelectorAll('.dot').forEach((dot, i) => dot.classList.toggle('active', i === visualIdx));
-    const currentTick = Math.round(rotationY / ((Math.PI * 2) / config.count));
-    if (currentTick !== lastTriggeredTick) { playClick(); lastTriggeredTick = currentTick; }
+    document.querySelectorAll('.dot').forEach((dot, i) => {
+        if (i === visualIdx) {
+            dot.classList.add('active');
+        } else {
+            dot.classList.remove('active');
+            dot.querySelector('.progress').style.width = '0%';
+        }
+    });
 }
 
 function setVisualState(moving) {
     isMoving = moving;
+    stopAllMeshAnimations();
     const activeIdx = getActiveIndex();
+
     if (moving) {
+        stopAutoplay();
         meshes.forEach(m => {
-            gsap.to(m.material.uniforms.uOpacity, { value: 1, duration: 0.3, overwrite: true });
-            gsap.to(m.material.uniforms.uBend, { value: 1, duration: 0.3, ease: "power2.out", overwrite: true });
+            m.userData.opAnim = animate(m.material.uniforms.uOpacity.value, 1, { duration: 0.3, onUpdate: v => m.material.uniforms.uOpacity.value = v });
+            m.userData.bendAnim = animate(m.material.uniforms.uBend.value, 1, { duration: 0.3, ease: [0.25, 1, 0.5, 1], onUpdate: v => m.material.uniforms.uBend.value = v });
         });
     } else {
         meshes.forEach((m, i) => {
-            gsap.to(m.material.uniforms.uBend, { value: 0, duration: 0.45, ease: "power2.inOut", overwrite: true });
-            if (i !== activeIdx) gsap.to(m.material.uniforms.uOpacity, { value: 0, duration: 0.45, ease: "power2.inOut", overwrite: true });
+            const isMain = (i === activeIdx);
+            m.userData.bendAnim = animate(m.material.uniforms.uBend.value, 0, {
+                duration: 0.45, ease: [0.45, 0, 0.55, 1],
+                onUpdate: v => m.material.uniforms.uBend.value = v,
+                onComplete: () => { if (isMain) startAutoplay(); }
+            });
+            if (!isMain) {
+                m.userData.opAnim = animate(m.material.uniforms.uOpacity.value, 0, {
+                    duration: 0.45, ease: [0.45, 0, 0.55, 1],
+                    onUpdate: v => m.material.uniforms.uOpacity.value = v
+                });
+            }
         });
     }
 }
 
 function animateTo(targetIdx) {
     currentTargetIndex = targetIdx;
-    const step = (Math.PI * 2) / config.count;
     setVisualState(true);
-    gsap.to(carouselGroup.rotation, {
-        y: currentTargetIndex * step,
-        duration: 0.8, ease: "expo.out", overwrite: true,
-        onUpdate: () => { rotationY = carouselGroup.rotation.y; updateUI(); },
+    if (rotAnim) rotAnim.stop();
+
+    rotAnim = animate(carouselGroup.rotation.y, currentTargetIndex * step, {
+        duration: 0.8, ease: [0.16, 1, 0.3, 1],
+        onUpdate: v => { rotationY = v; carouselGroup.rotation.y = rotationY; updateUI(); },
         onComplete: () => setVisualState(false)
     });
 }
 
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
+
 const onDown = (x, y) => {
     if (isMoving) return;
     mouse.set((x / window.innerWidth) * 2 - 1, -(y / window.innerHeight) * 2 + 1);
     raycaster.setFromCamera(mouse, camera);
     if (raycaster.intersectObject(meshes[getActiveIndex()]).length > 0) {
-        isDragging = true; lastX = x; gsap.killTweensOf(carouselGroup.rotation); setVisualState(true);
+        isDragging = true; lastX = x;
+        if (rotAnim) rotAnim.stop();
+        setVisualState(true);
     }
 };
+
 const onMove = (x, y) => {
     if (!isDragging) {
         mouse.set((x / window.innerWidth) * 2 - 1, -(y / window.innerHeight) * 2 + 1);
@@ -305,39 +339,33 @@ const onMove = (x, y) => {
         document.body.style.cursor = raycaster.intersectObject(meshes[getActiveIndex()]).length > 0 ? 'grab' : 'default';
     } else {
         document.body.style.cursor = 'grabbing';
-        rotationY += (x - lastX) * 0.006; carouselGroup.rotation.y = rotationY; lastX = x; updateUI();
+        rotationY += (lastX - x) * 0.006; carouselGroup.rotation.y = rotationY; lastX = x; updateUI();
     }
-};
-const onUp = () => {
-    if (!isDragging) return;
-    isDragging = false;
-    animateTo(Math.round(rotationY / ((Math.PI * 2) / config.count)));
 };
 
-// --- Event Listeners ---
+const onUp = () => {
+    if (!isDragging) return;
+    isDragging = false; animateTo(Math.round(rotationY / step));
+};
+
+// --- Interaction Listeners ---
 window.addEventListener('mousedown', e => {
-    const panel = document.getElementById('settings-panel');
-    const toggle = document.getElementById('settings-toggle');
-    if (panel.classList.contains('open') && !panel.contains(e.target) && !toggle.contains(e.target)) {
-        panel.classList.remove('open');
-    }
+    const p = document.getElementById('settings-panel'), t = document.getElementById('settings-toggle');
+    if (p.classList.contains('open') && !p.contains(e.target) && !t.contains(e.target)) p.classList.remove('open');
     if (e.target.tagName === 'CANVAS') onDown(e.clientX, e.clientY);
 });
 window.addEventListener('mousemove', e => onMove(e.clientX, e.clientY));
 window.addEventListener('mouseup', onUp);
 
 window.addEventListener('touchstart', e => {
-    const panel = document.getElementById('settings-panel');
-    const toggle = document.getElementById('settings-toggle');
-    if (panel.classList.contains('open') && !panel.contains(e.target) && !toggle.contains(e.target)) {
-        panel.classList.remove('open');
-    }
+    const p = document.getElementById('settings-panel'), t = document.getElementById('settings-toggle');
+    if (p.classList.contains('open') && !p.contains(e.target) && !t.contains(e.target)) p.classList.remove('open');
     if (e.target.tagName === 'CANVAS') onDown(e.touches[0].clientX, e.touches[0].clientY);
 });
 window.addEventListener('touchmove', e => onMove(e.touches[0].clientX, e.touches[0].clientY));
 window.addEventListener('touchend', onUp);
 
-// Buttons & Keyboard
+// Arrows & Keyboard Triggers Audio & Move
 document.getElementById('next-btn').onclick = () => { if (config.count > 1) { playClick(); animateTo(currentTargetIndex - 1); } };
 document.getElementById('prev-btn').onclick = () => { if (config.count > 1) { playClick(); animateTo(currentTargetIndex + 1); } };
 
@@ -355,21 +383,20 @@ document.getElementById('pill').onclick = (e) => {
     let diff = targetIdx - getActiveIndex();
     if (diff > config.count/2) diff -= config.count;
     if (diff < -config.count/2) diff += config.count;
-    if (diff !== 0) playClick();
-    animateTo(currentTargetIndex - diff);
+    if (diff !== 0) animateTo(currentTargetIndex - diff);
 };
 
-// --- Parameter Settings UI ---
+// --- Parameter Control UI ---
 const panel = document.getElementById('settings-panel');
 document.getElementById('settings-toggle').onclick = () => panel.classList.toggle('open');
 
-const inputs = ['cameraZ', 'height', 'radius', 'cornerRadius', 'arrowPad', 'pillBottom', 'audioHigh', 'audioLow', 'audioDur'];
+const inputs = ['cameraZ', 'height', 'radius', 'cornerRadius', 'autoDur', 'arrowPad', 'pillBottom', 'audioHigh', 'audioLow', 'audioDur'];
 inputs.forEach(id => {
     document.getElementById('param-' + id).oninput = (e) => {
         let val = parseFloat(e.target.value);
         document.getElementById('val-' + id).innerText = id.includes('audio') || id.includes('Pad') || id.includes('Bottom')
             ? val + (id.includes('Dur') ? 'ms' : (id.includes('Pad') || id.includes('Bottom') ? 'px' : 'Hz'))
-            : val.toFixed(2);
+            : (id === 'autoDur' ? val.toFixed(1) + 's' : val.toFixed(2));
 
         if (id === 'cameraZ') { config.cameraZ = val; camera.position.z = val; }
         else if (id === 'height') { config.height = val; updateRadiusForCount(); rebuildCarousel(); }
@@ -377,10 +404,10 @@ inputs.forEach(id => {
         else if (id === 'cornerRadius') { config.cornerRadius = val; meshes.forEach(m => m.material.uniforms.uCornerRadius.value = val); }
         else if (id === 'arrowPad') { document.documentElement.style.setProperty('--arrow-pad', val + 'px'); }
         else if (id === 'pillBottom') { document.documentElement.style.setProperty('--pill-bottom', val + 'px'); }
+        else if (id === 'autoDur') { config.autoDur = val; if (!isMoving) startAutoplay(); }
         else { config[id] = id === 'audioDur' ? val / 1000 : val; }
     };
 });
-
 document.getElementById('val-audioDur').innerText = (config.audioDur * 1000) + 'ms';
 
 // --- Init ---
@@ -388,8 +415,8 @@ renderGrid();
 updateRadiusForCount();
 rebuildCarousel();
 
-function animate() { renderer.render(scene, camera); requestAnimationFrame(animate); }
-animate();
+function animateFrame() { renderer.render(scene, camera); requestAnimationFrame(animateFrame); }
+animateFrame();
 
 window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
