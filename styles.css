@@ -60,7 +60,7 @@ canvas:active { cursor: grabbing; }
     justify-content: center;
     cursor: pointer;
     pointer-events: all;
-    transition: transform 0.15s ease, background 0.15s ease;
+    transition: transform 0.1s ease, background 0.15s ease;
     box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     color: var(--ui-dark);
 }
@@ -187,10 +187,10 @@ input[type="range"]::-webkit-slider-thumb {
     border-radius: 50%;
     background: #fff;
     box-shadow: 0 2px 6px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05);
-    cursor: pointer;
+    cursor: grab;
     transition: transform 0.1s;
 }
-input[type="range"]::-webkit-slider-thumb:active { transform: scale(0.9); }
+input[type="range"]::-webkit-slider-thumb:active { transform: scale(0.9); cursor: grabbing; }
 
 hr { border: none; border-top: 1px solid rgba(0,0,0,0.08); margin: 20px 0; }
 
@@ -231,6 +231,12 @@ hr { border: none; border-top: 1px solid rgba(0,0,0,0.08); margin: 20px 0; }
     width: 100%;
     height: 100%;
     object-fit: cover;
+    display: block;
+}
+.grid-item .blank-preview {
+    width: 100%;
+    height: 100%;
+    background: #ffffff;
     display: block;
 }
 

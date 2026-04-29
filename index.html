@@ -3,25 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Configurator Carousel</title>
+    <title>Zero-Dependency Pro Carousel</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-    <!-- Settings Toggle -->
     <button class="btn" id="settings-toggle">
-        <svg viewBox="0 0 24 24" stroke-width="1.5"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
     </button>
 
-    <!-- Settings Modal -->
     <div id="settings-panel">
         <h3 class="panel-header">Carousel Configuration</h3>
         <div class="panel-scroll">
-
-            <!-- Geometry Controls -->
-            <div class="control-label" style="color:var(--text-main); margin-bottom:12px;">Geometry</div>
+            <div class="control-label" style="color:var(--text-main); margin-bottom:12px;">Geometry & Camera</div>
             <div class="control-group">
-                <div class="control-label"><span>Radius</span> <span class="control-val" id="val-radius">3.5</span></div>
+                <div class="control-label"><span>Camera Z Distance</span> <span class="control-val" id="val-cameraZ">12.0</span></div>
+                <input type="range" id="param-cameraZ" min="6" max="30" step="0.5" value="12.0">
+            </div>
+            <div class="control-group">
+                <div class="control-label"><span>Image Height</span> <span class="control-val" id="val-height">2.2</span></div>
+                <input type="range" id="param-height" min="1" max="5" step="0.1" value="2.2">
+            </div>
+            <div class="control-group">
+                <div class="control-label"><span>Cylinder Radius</span> <span class="control-val" id="val-radius">3.5</span></div>
                 <input type="range" id="param-radius" min="2" max="15" step="0.1" value="3.5">
             </div>
             <div class="control-group">
@@ -30,8 +34,7 @@
             </div>
 
             <hr>
-            <!-- UI Controls -->
-            <div class="control-label" style="color:var(--text-main); margin-bottom:12px;">Interface</div>
+            <div class="control-label" style="color:var(--text-main); margin-bottom:12px;">Interface Spacing</div>
             <div class="control-group">
                 <div class="control-label"><span>Arrow Spacing (LR)</span> <span class="control-val" id="val-arrowPad">40px</span></div>
                 <input type="range" id="param-arrowPad" min="10" max="200" step="1" value="40">
@@ -42,7 +45,6 @@
             </div>
 
             <hr>
-            <!-- Audio Controls -->
             <div class="control-label" style="color:var(--text-main); margin-bottom:12px;">Audio Synthesis</div>
             <div class="control-group">
                 <div class="control-label"><span>Pitch Start (Hz)</span> <span class="control-val" id="val-audioHigh">140</span></div>
@@ -58,7 +60,6 @@
             </div>
 
             <hr>
-            <!-- Content Manager -->
             <label class="upload-global-btn">
                 + Upload Images / Videos
                 <input type="file" id="global-upload" multiple accept="image/*,video/*">
@@ -67,7 +68,6 @@
         </div>
     </div>
 
-    <!-- Controls -->
     <div class="ui-overlay">
         <div class="nav-controls">
             <button class="btn" id="prev-btn"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>

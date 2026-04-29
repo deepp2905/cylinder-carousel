@@ -3,26 +3,50 @@ import gsap from 'gsap';
 
 // --- Config Engine ---
 let config = {
-    count: 2, height: 2.2, aspect: 16/9, radius: 3.5, cameraZ: 12,
-    cornerRadius: 0.05,
-    audioHigh: 140, audioLow: 40, audioDur: 0.04
+    count: 4, height: 2.2, aspect: 16/9, radius: 4.0, cameraZ: 12,
+    cornerRadius: 0.05, audioHigh: 140, audioLow: 40, audioDur: 0.04
 };
 
+// Zero-Dependency Defaults (4 Blank White Screens)
 const defaultTemplates = [
-    { type: 'image', url: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=1200', isLocal: false },
-    { type: 'image', url: 'https://images.unsplash.com/photo-1501854140801-50d01698950b?q=80&w=1200', isLocal: false }
+    { type: 'blank' }, { type: 'blank' }, { type: 'blank' }, { type: 'blank' }
 ];
 
 let items = [...defaultTemplates];
 let isUsingDefaults = true;
 
-// --- Dynamic Audio Engine ---
+// --- Procedural Textures ---
+function createBlankTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 16; canvas.height = 9;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, 16, 9);
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+}
+
+function createVideoTexture(url, meshUniforms) {
+    const vid = document.createElement('video');
+    vid.src = url; vid.crossOrigin = 'Anonymous'; vid.loop = true;
+    vid.muted = true; vid.playsInline = true; vid.autoplay = true;
+    vid.addEventListener('loadedmetadata', () => {
+        meshUniforms.uTexAspect.value = vid.videoWidth / vid.videoHeight;
+    });
+    vid.play().catch(() => {});
+    const tex = new THREE.VideoTexture(vid);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.minFilter = THREE.LinearFilter; tex.magFilter = THREE.LinearFilter;
+    return tex;
+}
+
+// --- Audio Engine ---
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 function playClick() {
     if (audioCtx.state === 'suspended') audioCtx.resume();
     const t = audioCtx.currentTime;
 
-    // Background "Tick"
     const noise = audioCtx.createBufferSource();
     const buf = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.01, audioCtx.sampleRate);
     const data = buf.getChannelData(0);
@@ -35,7 +59,6 @@ function playClick() {
     noise.connect(nf); nf.connect(ng); ng.connect(audioCtx.destination);
     noise.start(t);
 
-    // Tunable Mechanical Body
     const osc = audioCtx.createOscillator();
     const g = audioCtx.createGain();
     osc.type = 'triangle';
@@ -47,7 +70,7 @@ function playClick() {
     osc.start(t); osc.stop(t + config.audioDur);
 }
 
-// --- WebGL Setup & Smart Wrapper Shaders ---
+// --- WebGL Setup ---
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(25, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.z = config.cameraZ;
@@ -69,7 +92,6 @@ const vertexShader = `
     }
 `;
 
-// Fragment shader handles "object-fit: contain", transparent wrapper, and corner radius.
 const fragmentShader = `
     uniform sampler2D uTex;
     uniform float uOpacity;
@@ -78,31 +100,32 @@ const fragmentShader = `
     uniform float uCornerRadius;
     varying vec2 vUv;
 
-    float roundedBoxSDF(vec2 CenterPosition, vec2 Size, float Radius) {
-        return length(max(abs(CenterPosition)-Size+Radius,0.0))-Radius;
+    float sdRoundedBox(vec2 p, vec2 b, float r) {
+        vec2 q = abs(p) - b + vec2(r);
+        return min(max(q.x, q.y), 0.0) + length(max(q, vec2(0.0))) - r;
     }
 
     void main() {
-        // 1. Object Fit Contain
+        // Object Fit: Contain
         vec2 fitUv = vUv - 0.5;
-        if (uPlaneAspect < uTexAspect) {
-            fitUv.y *= uPlaneAspect / uTexAspect;
+        if (uPlaneAspect > uTexAspect) {
+            fitUv.x *= uPlaneAspect / uTexAspect;
         } else {
-            fitUv.x *= uTexAspect / uPlaneAspect;
+            fitUv.y *= uTexAspect / uPlaneAspect;
         }
         fitUv += 0.5;
 
-        vec4 texColor = vec4(0.0);
-        if (fitUv.x >= 0.0 && fitUv.x <= 1.0 && fitUv.y >= 0.0 && fitUv.y <= 1.0) {
-            texColor = texture2D(uTex, fitUv);
-        }
+        vec4 texColor = texture2D(uTex, fitUv);
 
-        // 2. Corner Radius Clipping (SDF)
-        vec2 pixelPos = vUv * vec2(uPlaneAspect, 1.0);
-        vec2 halfSize = vec2(uPlaneAspect, 1.0) * 0.5;
+        float maskX = step(0.0, fitUv.x) * step(fitUv.x, 1.0);
+        float maskY = step(0.0, fitUv.y) * step(fitUv.y, 1.0);
+        texColor *= (maskX * maskY);
 
-        float d = roundedBoxSDF(pixelPos - halfSize, halfSize, uCornerRadius);
-        float edgeAlpha = 1.0 - smoothstep(0.0, 0.01, d);
+        // Corner Radius Mask
+        vec2 p = (vUv - 0.5) * vec2(uPlaneAspect, 1.0);
+        vec2 b = vec2(uPlaneAspect, 1.0) * 0.5;
+        float d = sdRoundedBox(p, b, uCornerRadius);
+        float edgeAlpha = 1.0 - smoothstep(0.0, 0.005, d);
 
         gl_FragColor = vec4(texColor.rgb, texColor.a * edgeAlpha * uOpacity);
     }
@@ -110,20 +133,6 @@ const fragmentShader = `
 
 const meshes = [];
 const textureLoader = new THREE.TextureLoader();
-
-function createVideoTexture(url, meshUniforms) {
-    const vid = document.createElement('video');
-    vid.src = url; vid.crossOrigin = 'Anonymous'; vid.loop = true;
-    vid.muted = true; vid.playsInline = true; vid.autoplay = true;
-    vid.addEventListener('loadedmetadata', () => {
-        meshUniforms.uTexAspect.value = vid.videoWidth / vid.videoHeight;
-    });
-    vid.play().catch(() => {});
-    const tex = new THREE.VideoTexture(vid);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    tex.minFilter = THREE.LinearFilter; tex.magFilter = THREE.LinearFilter;
-    return tex;
-}
 
 function updateRadiusForCount() {
     const minRadius = config.height * config.aspect * 0.7;
@@ -154,16 +163,18 @@ function rebuildCarousel() {
             uTex: { value: null },
             uOpacity: { value: i === 0 ? 1 : 0 },
             uPlaneAspect: { value: config.aspect },
-            uTexAspect: { value: 1.0 },
+            uTexAspect: { value: 16/9 },
             uCornerRadius: { value: config.cornerRadius }
         };
 
         if (item.type === 'video') {
             uniforms.uTex.value = createVideoTexture(item.url, uniforms);
-        } else {
+        } else if (item.type === 'image') {
             uniforms.uTex.value = textureLoader.load(item.url, (tex) => {
                 uniforms.uTexAspect.value = tex.image.width / tex.image.height;
             });
+        } else {
+            uniforms.uTex.value = createBlankTexture();
         }
 
         const mat = new THREE.ShaderMaterial({
@@ -197,8 +208,14 @@ function renderGrid() {
     items.forEach((item, idx) => {
         const div = document.createElement('div');
         div.className = 'grid-item';
+
+        let mediaHTML = '';
+        if (item.type === 'video') mediaHTML = `<video src="${item.url}" muted playsinline></video>`;
+        else if (item.type === 'image') mediaHTML = `<img src="${item.url}">`;
+        else mediaHTML = `<div class="blank-preview"></div>`;
+
         div.innerHTML = `
-            ${item.type === 'video' ? `<video src="${item.url}" muted playsinline></video>` : `<img src="${item.url}">`}
+            ${mediaHTML}
             <div class="del-btn" data-idx="${idx}">×</div>
         `;
         grid.appendChild(div);
@@ -261,9 +278,10 @@ function setVisualState(moving) {
 
 function animateTo(targetIdx) {
     currentTargetIndex = targetIdx;
+    const step = (Math.PI * 2) / config.count;
     setVisualState(true);
     gsap.to(carouselGroup.rotation, {
-        y: currentTargetIndex * ((Math.PI * 2) / config.count),
+        y: currentTargetIndex * step,
         duration: 0.8, ease: "expo.out", overwrite: true,
         onUpdate: () => { rotationY = carouselGroup.rotation.y; updateUI(); },
         onComplete: () => setVisualState(false)
@@ -296,15 +314,39 @@ const onUp = () => {
     animateTo(Math.round(rotationY / ((Math.PI * 2) / config.count)));
 };
 
-window.addEventListener('mousedown', e => { if (e.target.tagName === 'CANVAS') onDown(e.clientX, e.clientY); });
+// --- Event Listeners ---
+window.addEventListener('mousedown', e => {
+    const panel = document.getElementById('settings-panel');
+    const toggle = document.getElementById('settings-toggle');
+    if (panel.classList.contains('open') && !panel.contains(e.target) && !toggle.contains(e.target)) {
+        panel.classList.remove('open');
+    }
+    if (e.target.tagName === 'CANVAS') onDown(e.clientX, e.clientY);
+});
 window.addEventListener('mousemove', e => onMove(e.clientX, e.clientY));
 window.addEventListener('mouseup', onUp);
-window.addEventListener('touchstart', e => { if (e.target.tagName === 'CANVAS') onDown(e.touches[0].clientX, e.touches[0].clientY); });
+
+window.addEventListener('touchstart', e => {
+    const panel = document.getElementById('settings-panel');
+    const toggle = document.getElementById('settings-toggle');
+    if (panel.classList.contains('open') && !panel.contains(e.target) && !toggle.contains(e.target)) {
+        panel.classList.remove('open');
+    }
+    if (e.target.tagName === 'CANVAS') onDown(e.touches[0].clientX, e.touches[0].clientY);
+});
 window.addEventListener('touchmove', e => onMove(e.touches[0].clientX, e.touches[0].clientY));
 window.addEventListener('touchend', onUp);
 
-document.getElementById('next-btn').onclick = () => { if (config.count > 1) animateTo(currentTargetIndex - 1); };
-document.getElementById('prev-btn').onclick = () => { if (config.count > 1) animateTo(currentTargetIndex + 1); };
+// Buttons & Keyboard
+document.getElementById('next-btn').onclick = () => { if (config.count > 1) { playClick(); animateTo(currentTargetIndex - 1); } };
+document.getElementById('prev-btn').onclick = () => { if (config.count > 1) { playClick(); animateTo(currentTargetIndex + 1); } };
+
+window.addEventListener('keydown', (e) => {
+    if (config.count > 1) {
+        if (e.key === 'ArrowRight') { playClick(); animateTo(currentTargetIndex - 1); }
+        if (e.key === 'ArrowLeft') { playClick(); animateTo(currentTargetIndex + 1); }
+    }
+});
 
 document.getElementById('pill').onclick = (e) => {
     if (config.count <= 1) return;
@@ -313,6 +355,7 @@ document.getElementById('pill').onclick = (e) => {
     let diff = targetIdx - getActiveIndex();
     if (diff > config.count/2) diff -= config.count;
     if (diff < -config.count/2) diff += config.count;
+    if (diff !== 0) playClick();
     animateTo(currentTargetIndex - diff);
 };
 
@@ -320,7 +363,7 @@ document.getElementById('pill').onclick = (e) => {
 const panel = document.getElementById('settings-panel');
 document.getElementById('settings-toggle').onclick = () => panel.classList.toggle('open');
 
-const inputs = ['radius', 'cornerRadius', 'arrowPad', 'pillBottom', 'audioHigh', 'audioLow', 'audioDur'];
+const inputs = ['cameraZ', 'height', 'radius', 'cornerRadius', 'arrowPad', 'pillBottom', 'audioHigh', 'audioLow', 'audioDur'];
 inputs.forEach(id => {
     document.getElementById('param-' + id).oninput = (e) => {
         let val = parseFloat(e.target.value);
@@ -328,18 +371,13 @@ inputs.forEach(id => {
             ? val + (id.includes('Dur') ? 'ms' : (id.includes('Pad') || id.includes('Bottom') ? 'px' : 'Hz'))
             : val.toFixed(2);
 
-        if (id === 'radius') {
-            config.radius = val; rebuildCarousel();
-        } else if (id === 'cornerRadius') {
-            config.cornerRadius = val;
-            meshes.forEach(m => m.material.uniforms.uCornerRadius.value = val);
-        } else if (id === 'arrowPad') {
-            document.documentElement.style.setProperty('--arrow-pad', val + 'px');
-        } else if (id === 'pillBottom') {
-            document.documentElement.style.setProperty('--pill-bottom', val + 'px');
-        } else {
-            config[id] = id === 'audioDur' ? val / 1000 : val;
-        }
+        if (id === 'cameraZ') { config.cameraZ = val; camera.position.z = val; }
+        else if (id === 'height') { config.height = val; updateRadiusForCount(); rebuildCarousel(); }
+        else if (id === 'radius') { config.radius = val; rebuildCarousel(); }
+        else if (id === 'cornerRadius') { config.cornerRadius = val; meshes.forEach(m => m.material.uniforms.uCornerRadius.value = val); }
+        else if (id === 'arrowPad') { document.documentElement.style.setProperty('--arrow-pad', val + 'px'); }
+        else if (id === 'pillBottom') { document.documentElement.style.setProperty('--pill-bottom', val + 'px'); }
+        else { config[id] = id === 'audioDur' ? val / 1000 : val; }
     };
 });
 
