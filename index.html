@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sleek Configurator Carousel</title>
+    <title>Dynamic Auto-Scaling Carousel</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -21,18 +21,13 @@
 
         <div class="panel-scroll">
             <div class="control-group">
-                <div class="control-label"><span>Item Count</span> <span class="control-val" id="val-count">4</span></div>
-                <input type="range" id="param-count" min="3" max="10" value="4">
-            </div>
-
-            <div class="control-group">
                 <div class="control-label"><span>Camera Distance</span> <span class="control-val" id="val-cameraZ">12.0</span></div>
                 <input type="range" id="param-cameraZ" min="6" max="25" value="12" step="0.5">
             </div>
 
             <div class="control-group">
-                <div class="control-label"><span>Cylinder Radius</span> <span class="control-val" id="val-radius">4.8</span></div>
-                <input type="range" id="param-radius" min="2" max="15" step="0.1" value="4.8">
+                <div class="control-label"><span>Cylinder Radius</span> <span class="control-val" id="val-radius">3.5</span></div>
+                <input type="range" id="param-radius" min="2" max="15" step="0.1" value="3.5">
             </div>
 
             <div class="control-group">
@@ -41,8 +36,13 @@
             </div>
 
             <hr>
-            <div class="control-label" style="color:var(--text-main); margin-bottom:12px;">Content Manager</div>
-            <div id="content-list"></div>
+
+            <label class="upload-global-btn">
+                + Upload Images / Videos
+                <input type="file" id="global-upload" multiple accept="image/*,video/*">
+            </label>
+
+            <div class="media-grid" id="media-grid"></div>
         </div>
     </div>
 
