@@ -17,22 +17,16 @@ function playClick() {
     osc.start(t); osc.stop(t + 0.04);
 }
 
-// --- Configuration & Global State ---
-let config = { count: 4, height: 2.2, aspect: 16/9, radius: 4.8, cameraZ: 12 };
+// --- Global State & Defaults ---
+let config = { count: 2, height: 2.2, aspect: 16/9, radius: 3.5, cameraZ: 12 };
 
-// Pre-loaded Defaults (Images & Videos)
-let items = [
-    { type: 'image', url: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=1200', name: 'Default Image 1' },
-    { type: 'video', url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4', name: 'Default Video 1' },
-    { type: 'image', url: 'https://images.unsplash.com/photo-1501854140801-50d01698950b?q=80&w=1200', name: 'Default Image 2' },
-    { type: 'video', url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4', name: 'Default Video 2' },
-    { type: 'image', url: 'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?q=80&w=1200', name: 'Default Image 3' },
-    { type: 'image', url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=1200', name: 'Default Image 4' },
-    { type: 'image', url: 'https://images.unsplash.com/photo-150062786916c-7012c0a25961?q=80&w=1200', name: 'Default Image 5' },
-    { type: 'image', url: 'https://images.unsplash.com/photo-1433086966358-54859d0ed716?q=80&w=1200', name: 'Default Image 6' },
-    { type: 'image', url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1200', name: 'Default Image 7' },
-    { type: 'image', url: 'https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?q=80&w=1200', name: 'Default Image 8' }
+const defaultTemplates = [
+    { type: 'image', url: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=1200', isLocal: false },
+    { type: 'image', url: 'https://images.unsplash.com/photo-1501854140801-50d01698950b?q=80&w=1200', isLocal: false }
 ];
+
+let items = [...defaultTemplates];
+let isUsingDefaults = true;
 
 // --- Three.js Setup ---
 const scene = new THREE.Scene();
@@ -50,8 +44,7 @@ scene.add(carouselGroup);
 const vertexShader = `
     uniform float uBend; uniform float uRadius; varying vec2 vUv;
     void main() {
-        vUv = uv;
-        float angle = position.x / uRadius;
+        vUv = uv; float angle = position.x / uRadius;
         vec3 curved = vec3(sin(angle) * uRadius, position.y, cos(angle) * uRadius - uRadius);
         gl_Position = projectionMatrix * modelViewMatrix * vec4(mix(position, curved, uBend), 1.0);
     }
@@ -64,7 +57,6 @@ const fragmentShader = `
 const meshes = [];
 const textureLoader = new THREE.TextureLoader();
 
-// --- Engine Logic ---
 function createVideoTexture(url) {
     const vid = document.createElement('video');
     vid.src = url; vid.crossOrigin = 'Anonymous'; vid.loop = true;
@@ -76,11 +68,20 @@ function createVideoTexture(url) {
     return tex;
 }
 
+function updateRadiusForCount() {
+    const minRadius = config.height * config.aspect * 0.7;
+    const calculated = (config.count * (config.height * config.aspect)) / (2 * Math.PI) + 0.3;
+    config.radius = Math.max(minRadius, calculated);
+
+    document.getElementById('param-radius').value = config.radius;
+    document.getElementById('val-radius').innerText = config.radius.toFixed(1);
+}
+
 function rebuildCarousel() {
     while (carouselGroup.children.length > 0) {
         const child = carouselGroup.children[0];
         child.geometry.dispose();
-        child.material.uniforms.uTex.value.dispose();
+        if (child.material.uniforms.uTex.value) child.material.uniforms.uTex.value.dispose();
         child.material.dispose();
         carouselGroup.remove(child);
     }
@@ -108,7 +109,6 @@ function rebuildCarousel() {
         meshes.push(mesh);
     }
 
-    // Pagination Sync
     const pill = document.getElementById('pill');
     pill.innerHTML = '';
     for (let i = 0; i < config.count; i++) {
@@ -120,7 +120,72 @@ function rebuildCarousel() {
     rotationY = 0; currentTargetIndex = 0; carouselGroup.rotation.y = 0; updateUI();
 }
 
-// --- Interaction Logic ---
+// --- Dynamic Grid Manager ---
+function renderGrid() {
+    const grid = document.getElementById('media-grid');
+    grid.innerHTML = '';
+
+    items.forEach((item, idx) => {
+        const div = document.createElement('div');
+        div.className = 'grid-item';
+
+        let mediaHTML = item.type === 'video'
+            ? `<video src="${item.url}" muted playsinline></video>`
+            : `<img src="${item.url}">`;
+
+        div.innerHTML = `
+            ${mediaHTML}
+            <div class="del-btn" data-idx="${idx}">×</div>
+        `;
+        grid.appendChild(div);
+    });
+
+    grid.querySelectorAll('.del-btn').forEach(btn => {
+        btn.onclick = () => deleteItem(parseInt(btn.dataset.idx, 10));
+    });
+}
+
+document.getElementById('global-upload').addEventListener('change', (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+
+    if (isUsingDefaults) {
+        items = [];
+        isUsingDefaults = false;
+    }
+
+    files.forEach(file => {
+        items.push({
+            type: file.type.startsWith('video/') ? 'video' : 'image',
+            url: URL.createObjectURL(file),
+            isLocal: true
+        });
+    });
+
+    config.count = items.length;
+    updateRadiusForCount();
+    renderGrid();
+    rebuildCarousel();
+    e.target.value = '';
+});
+
+function deleteItem(idx) {
+    if (items[idx].isLocal) URL.revokeObjectURL(items[idx].url);
+
+    items.splice(idx, 1);
+
+    if (items.length === 0) {
+        isUsingDefaults = true;
+        items = [...defaultTemplates];
+    }
+
+    config.count = items.length;
+    updateRadiusForCount();
+    renderGrid();
+    rebuildCarousel();
+}
+
+// --- Core Interaction Logic ---
 let rotationY = 0, lastTriggeredTick = 0, isDragging = false, isMoving = false, lastX = 0, currentTargetIndex = 0;
 
 function getActiveIndex() {
@@ -195,10 +260,10 @@ window.addEventListener('touchstart', e => { if (e.target.tagName === 'CANVAS') 
 window.addEventListener('touchmove', e => onMove(e.touches[0].clientX, e.touches[0].clientY));
 window.addEventListener('touchend', onUp);
 
-document.getElementById('next-btn').onclick = () => animateTo(currentTargetIndex - 1);
-document.getElementById('prev-btn').onclick = () => animateTo(currentTargetIndex + 1);
-
+document.getElementById('next-btn').onclick = () => { if (config.count > 1) animateTo(currentTargetIndex - 1); };
+document.getElementById('prev-btn').onclick = () => { if (config.count > 1) animateTo(currentTargetIndex + 1); };
 document.getElementById('pill').onclick = (e) => {
+    if (config.count <= 1) return;
     const r = e.currentTarget.getBoundingClientRect();
     const targetIdx = Math.floor(((e.clientX - r.left) / r.width) * config.count);
     let diff = targetIdx - getActiveIndex();
@@ -207,64 +272,23 @@ document.getElementById('pill').onclick = (e) => {
     animateTo(currentTargetIndex - diff);
 };
 
-// --- UI Modal & Parameters ---
+// --- UI Modal & Sliders ---
 const panel = document.getElementById('settings-panel');
 document.getElementById('settings-toggle').onclick = () => panel.classList.toggle('open');
 
-const inputs = ['count', 'cameraZ', 'radius', 'height'];
+const inputs = ['cameraZ', 'radius', 'height'];
 inputs.forEach(id => {
     document.getElementById('param-' + id).oninput = (e) => {
         let val = parseFloat(e.target.value);
-        document.getElementById('val-' + id).innerText = val.toFixed(id === 'count' ? 0 : 1);
-        if (id === 'count') {
-            config.count = val;
-            const optimal = (val * (config.height * config.aspect)) / (2 * Math.PI) + 0.5;
-            config.radius = optimal;
-            document.getElementById('param-radius').value = optimal;
-            document.getElementById('val-radius').innerText = optimal.toFixed(1);
-            renderContentList(); rebuildCarousel();
-        } else if (id === 'cameraZ') {
-            config.cameraZ = val; camera.position.z = val;
-        } else {
-            config[id] = val; rebuildCarousel();
-        }
+        document.getElementById('val-' + id).innerText = val.toFixed(1);
+        if (id === 'cameraZ') { config.cameraZ = val; camera.position.z = val; }
+        else { config[id] = val; rebuildCarousel(); }
     };
 });
 
-// Content Manager
-function renderContentList() {
-    const list = document.getElementById('content-list');
-    list.innerHTML = '';
-    for (let i = 0; i < config.count; i++) {
-        const item = items[i];
-        const row = document.createElement('div');
-        row.className = 'item-row';
-        row.innerHTML = `
-            <div class="item-info">
-                <span class="item-title">Slot ${i+1}</span>
-                <span class="item-desc" id="desc-${i}">${item.name}</span>
-            </div>
-            <label class="upload-btn">
-                Upload
-                <input type="file" id="file-${i}" accept="image/*,video/*">
-            </label>
-        `;
-        list.appendChild(row);
-
-        document.getElementById(`file-${i}`).onchange = (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                items[i].url = URL.createObjectURL(file);
-                items[i].type = file.type.startsWith('video/') ? 'video' : 'image';
-                items[i].name = file.name;
-                document.getElementById(`desc-${i}`).innerText = file.name;
-                rebuildCarousel();
-            }
-        };
-    }
-}
-
-renderContentList();
+// --- Init ---
+renderGrid();
+updateRadiusForCount();
 rebuildCarousel();
 
 function animate() { renderer.render(scene, camera); requestAnimationFrame(animate); }
