@@ -3,7 +3,7 @@ import { animate } from 'framer-motion';
 
 // --- Config Engine ---
 let config = {
-    count: 4, height: 2.2, aspect: 16/9, radius: 4.0, cameraZ: 12,
+    count: 8, height: 2.2, aspect: 16/9, radius: 4.0, cameraZ: 24,
     cornerRadius: 0.05, audioHigh: 140, audioLow: 40, audioDur: 0.04,
     autoDur: 3.0
 };
@@ -12,7 +12,11 @@ const defaultTemplates = [
     { type: 'image', url: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=1200', isLocal: false },
     { type: 'image', url: 'https://images.unsplash.com/photo-1501854140801-50d01698950b?q=80&w=1200', isLocal: false },
     { type: 'image', url: 'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?q=80&w=1200', isLocal: false },
-    { type: 'image', url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=1200', isLocal: false }
+    { type: 'image', url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=1200', isLocal: false },
+    { type: 'image', url: 'https://images.unsplash.com/photo-1418065460487-3e41a6c84dc5?q=80&w=1200', isLocal: false },
+    { type: 'image', url: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200', isLocal: false },
+    { type: 'image', url: 'https://images.unsplash.com/photo-1505765050516-f72dcac9c60e?q=80&w=1200', isLocal: false },
+    { type: 'image', url: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1200', isLocal: false }
 ];
 
 let items = [...defaultTemplates];
@@ -93,7 +97,7 @@ function playClick() {
 
 // --- WebGL Setup ---
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(25, window.innerWidth / window.innerHeight, 0.1, 1000);
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1200);
 camera.position.z = config.cameraZ;
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -122,19 +126,17 @@ const fragmentShader = `
     }
     void main() {
         vec2 fitUv = vUv - 0.5;
-        if (uPlaneAspect > uTexAspect) fitUv.x *= uPlaneAspect / uTexAspect;
-        else fitUv.y *= uTexAspect / uPlaneAspect;
+        if (uPlaneAspect > uTexAspect) fitUv.y *= uTexAspect / uPlaneAspect;
+        else fitUv.x *= uPlaneAspect / uTexAspect;
         fitUv += 0.5;
 
-        vec4 texColor = texture2D(uTex, fitUv);
-        float maskX = step(0.0, fitUv.x) * step(fitUv.x, 1.0);
-        float maskY = step(0.0, fitUv.y) * step(fitUv.y, 1.0);
-        texColor *= (maskX * maskY);
+        vec4 texColor = texture2D(uTex, clamp(fitUv, 0.0, 1.0));
 
         vec2 p = (vUv - 0.5) * vec2(uPlaneAspect, 1.0);
         vec2 b = vec2(uPlaneAspect, 1.0) * 0.5;
         float d = sdRoundedBox(p, b, uCornerRadius);
-        float edgeAlpha = 1.0 - smoothstep(0.0, 0.005, d);
+        float aa = fwidth(d) * 1.5;
+        float edgeAlpha = 1.0 - smoothstep(-aa, aa, d);
 
         gl_FragColor = vec4(texColor.rgb, texColor.a * edgeAlpha * uOpacity);
     }
@@ -188,8 +190,8 @@ function rebuildCarousel() {
     for (let i = 0; i < config.count; i++) {
         const item = items[i];
         const uniforms = {
-            uBend: { value: 0 }, uRadius: { value: config.radius }, uTex: { value: null },
-            uOpacity: { value: i === 0 ? 1 : 0 }, uPlaneAspect: { value: config.aspect },
+            uBend: { value: 1 }, uRadius: { value: config.radius }, uTex: { value: null },
+            uOpacity: { value: 1 }, uPlaneAspect: { value: config.aspect },
             uTexAspect: { value: 1.0 }, uCornerRadius: { value: config.cornerRadius }
         };
 
@@ -279,30 +281,10 @@ function updateUI() {
 
 function setVisualState(moving) {
     isMoving = moving;
-    stopAllMeshAnimations();
-    const activeIdx = getActiveIndex();
-
     if (moving) {
         stopAutoplay();
-        meshes.forEach(m => {
-            m.userData.opAnim = animate(m.material.uniforms.uOpacity.value, 1, { duration: 0.3, onUpdate: v => m.material.uniforms.uOpacity.value = v });
-            m.userData.bendAnim = animate(m.material.uniforms.uBend.value, 1, { duration: 0.3, ease: [0.25, 1, 0.5, 1], onUpdate: v => m.material.uniforms.uBend.value = v });
-        });
     } else {
-        meshes.forEach((m, i) => {
-            const isMain = (i === activeIdx);
-            m.userData.bendAnim = animate(m.material.uniforms.uBend.value, 0, {
-                duration: 0.45, ease: [0.45, 0, 0.55, 1],
-                onUpdate: v => m.material.uniforms.uBend.value = v,
-                onComplete: () => { if (isMain) startAutoplay(); }
-            });
-            if (!isMain) {
-                m.userData.opAnim = animate(m.material.uniforms.uOpacity.value, 0, {
-                    duration: 0.45, ease: [0.45, 0, 0.55, 1],
-                    onUpdate: v => m.material.uniforms.uOpacity.value = v
-                });
-            }
-        });
+        startAutoplay();
     }
 }
 
@@ -312,7 +294,7 @@ function animateTo(targetIdx) {
     if (rotAnim) rotAnim.stop();
 
     rotAnim = animate(carouselGroup.rotation.y, currentTargetIndex * step, {
-        duration: 0.8, ease: [0.16, 1, 0.3, 1],
+        type: 'spring', stiffness: 180, damping: 26, mass: 1, restDelta: 0.0005,
         onUpdate: v => { rotationY = v; carouselGroup.rotation.y = rotationY; updateUI(); },
         onComplete: () => setVisualState(false)
     });
