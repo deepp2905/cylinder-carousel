@@ -3,7 +3,7 @@ import { animate } from 'framer-motion';
 
 // --- Config Engine ---
 let config = {
-    count: 8, height: 2.2, aspect: 16/9, radius: 4.0, cameraZ: 24,
+    count: 8, height: 2.2, aspect: 16/9, radius: 4.0, padding: 0.3, cameraZ: 12,
     cornerRadius: 0.05, audioHigh: 140, audioLow: 40, audioDur: 0.04,
     autoDur: 3.0
 };
@@ -97,7 +97,7 @@ function playClick() {
 
 // --- WebGL Setup ---
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1200);
+const camera = new THREE.PerspectiveCamera(100, window.innerWidth / window.innerHeight, 0.1, 1200);
 camera.position.z = config.cameraZ;
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -158,11 +158,8 @@ function createVideoTexture(url, meshUniforms) {
 }
 
 function updateRadiusForCount() {
-    const minRadius = config.height * config.aspect * 0.7;
-    const calculated = (config.count * (config.height * config.aspect)) / (2 * Math.PI) + 0.3;
-    config.radius = Math.max(minRadius, calculated);
-    document.getElementById('param-radius').value = config.radius;
-    document.getElementById('val-radius').innerText = config.radius.toFixed(1);
+    const width = config.height * config.aspect;
+    config.radius = (config.count * (width + config.padding)) / (2 * Math.PI);
 }
 
 function stopAllMeshAnimations() {
@@ -300,25 +297,16 @@ function animateTo(targetIdx) {
     });
 }
 
-const raycaster = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
-
 const onDown = (x, y) => {
     if (isMoving) return;
-    mouse.set((x / window.innerWidth) * 2 - 1, -(y / window.innerHeight) * 2 + 1);
-    raycaster.setFromCamera(mouse, camera);
-    if (raycaster.intersectObject(meshes[getActiveIndex()]).length > 0) {
-        isDragging = true; lastX = x;
-        if (rotAnim) rotAnim.stop();
-        setVisualState(true);
-    }
+    isDragging = true; lastX = x;
+    if (rotAnim) rotAnim.stop();
+    setVisualState(true);
 };
 
-const onMove = (x, y) => {
+const onMove = (x, y, target) => {
     if (!isDragging) {
-        mouse.set((x / window.innerWidth) * 2 - 1, -(y / window.innerHeight) * 2 + 1);
-        raycaster.setFromCamera(mouse, camera);
-        document.body.style.cursor = raycaster.intersectObject(meshes[getActiveIndex()]).length > 0 ? 'grab' : 'default';
+        document.body.style.cursor = target && target.tagName === 'CANVAS' ? 'grab' : 'default';
     } else {
         document.body.style.cursor = 'grabbing';
         rotationY += (lastX - x) * 0.006; carouselGroup.rotation.y = rotationY; lastX = x; updateUI();
@@ -336,7 +324,7 @@ window.addEventListener('mousedown', e => {
     if (p.classList.contains('open') && !p.contains(e.target) && !t.contains(e.target)) p.classList.remove('open');
     if (e.target.tagName === 'CANVAS') onDown(e.clientX, e.clientY);
 });
-window.addEventListener('mousemove', e => onMove(e.clientX, e.clientY));
+window.addEventListener('mousemove', e => onMove(e.clientX, e.clientY, e.target));
 window.addEventListener('mouseup', onUp);
 
 window.addEventListener('touchstart', e => {
@@ -344,7 +332,7 @@ window.addEventListener('touchstart', e => {
     if (p.classList.contains('open') && !p.contains(e.target) && !t.contains(e.target)) p.classList.remove('open');
     if (e.target.tagName === 'CANVAS') onDown(e.touches[0].clientX, e.touches[0].clientY);
 });
-window.addEventListener('touchmove', e => onMove(e.touches[0].clientX, e.touches[0].clientY));
+window.addEventListener('touchmove', e => onMove(e.touches[0].clientX, e.touches[0].clientY, e.target));
 window.addEventListener('touchend', onUp);
 
 // Arrows & Keyboard Triggers Audio & Move
@@ -372,7 +360,7 @@ document.getElementById('pill').onclick = (e) => {
 const panel = document.getElementById('settings-panel');
 document.getElementById('settings-toggle').onclick = () => panel.classList.toggle('open');
 
-const inputs = ['cameraZ', 'height', 'radius', 'cornerRadius', 'autoDur', 'arrowPad', 'pillBottom', 'audioHigh', 'audioLow', 'audioDur'];
+const inputs = ['cameraZ', 'height', 'padding', 'cornerRadius', 'autoDur', 'arrowPad', 'pillBottom', 'audioHigh', 'audioLow', 'audioDur'];
 inputs.forEach(id => {
     document.getElementById('param-' + id).oninput = (e) => {
         let val = parseFloat(e.target.value);
@@ -381,8 +369,27 @@ inputs.forEach(id => {
             : (id === 'autoDur' ? val.toFixed(1) + 's' : val.toFixed(2));
 
         if (id === 'cameraZ') { config.cameraZ = val; camera.position.z = val; }
-        else if (id === 'height') { config.height = val; updateRadiusForCount(); rebuildCarousel(); }
-        else if (id === 'radius') { config.radius = val; rebuildCarousel(); }
+        else if (id === 'height') {
+            config.height = val;
+            updateRadiusForCount();
+            const width = config.height * config.aspect;
+            meshes.forEach((m, i) => {
+                m.geometry.dispose();
+                m.geometry = new THREE.PlaneGeometry(width, config.height, 80, 1);
+                const theta = (i / config.count) * Math.PI * 2;
+                m.position.set(Math.sin(theta) * config.radius, 0, Math.cos(theta) * config.radius);
+                m.material.uniforms.uRadius.value = config.radius;
+            });
+        }
+        else if (id === 'padding') {
+            config.padding = val;
+            updateRadiusForCount();
+            meshes.forEach((m, i) => {
+                const theta = (i / config.count) * Math.PI * 2;
+                m.position.set(Math.sin(theta) * config.radius, 0, Math.cos(theta) * config.radius);
+                m.material.uniforms.uRadius.value = config.radius;
+            });
+        }
         else if (id === 'cornerRadius') { config.cornerRadius = val; meshes.forEach(m => m.material.uniforms.uCornerRadius.value = val); }
         else if (id === 'arrowPad') { document.documentElement.style.setProperty('--arrow-pad', val + 'px'); }
         else if (id === 'pillBottom') { document.documentElement.style.setProperty('--pill-bottom', val + 'px'); }

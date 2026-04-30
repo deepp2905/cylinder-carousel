@@ -16,60 +16,74 @@
         <h3 class="panel-header">Carousel Configuration</h3>
         <div class="panel-scroll">
 
-            <div class="control-label" style="color:var(--text-main); margin-bottom:12px;">Geometry & Camera</div>
-            <div class="control-group">
-                <div class="control-label"><span>Camera Z Distance</span> <span class="control-val" id="val-cameraZ">12.0</span></div>
-                <input type="range" id="param-cameraZ" min="2" max="80" step="0.5" value="12.0">
-            </div>
-            <div class="control-group">
-                <div class="control-label"><span>Max Height</span> <span class="control-val" id="val-height">2.2</span></div>
-                <input type="range" id="param-height" min="1" max="5" step="0.1" value="2.2">
-            </div>
-            <div class="control-group">
-                <div class="control-label"><span>Cylinder Radius</span> <span class="control-val" id="val-radius">3.5</span></div>
-                <input type="range" id="param-radius" min="2" max="15" step="0.1" value="3.5">
-            </div>
-            <div class="control-group">
-                <div class="control-label"><span>Corner Radius</span> <span class="control-val" id="val-cornerRadius">0.05</span></div>
-                <input type="range" id="param-cornerRadius" min="0" max="0.5" step="0.01" value="0.05">
-            </div>
+            <details class="settings-section" open>
+                <summary class="section-header">Geometry & Camera</summary>
+                <div class="section-body">
+                    <div class="control-group">
+                        <div class="control-label"><span>Camera Z Distance</span> <span class="control-val" id="val-cameraZ">8.0</span></div>
+                        <input type="range" id="param-cameraZ" min="2" max="80" step="0.5" value="12.0">
+                    </div>
+                    <div class="control-group">
+                        <div class="control-label"><span>Max Height</span> <span class="control-val" id="val-height">2.2</span></div>
+                        <input type="range" id="param-height" min="1" max="5" step="0.1" value="2.2">
+                    </div>
+                    <div class="control-group">
+                        <div class="control-label"><span>Padding Between Elements</span> <span class="control-val" id="val-padding">0.30</span></div>
+                        <input type="range" id="param-padding" min="0" max="5" step="0.05" value="0.30">
+                    </div>
+                    <div class="control-group">
+                        <div class="control-label"><span>Corner Radius</span> <span class="control-val" id="val-cornerRadius">0.05</span></div>
+                        <input type="range" id="param-cornerRadius" min="0" max="0.5" step="0.01" value="0.05">
+                    </div>
+                </div>
+            </details>
 
-            <hr>
-            <div class="control-label" style="color:var(--text-main); margin-bottom:12px;">Interface & Timing</div>
-            <div class="control-group">
-                <div class="control-label"><span>Autoplay Timer</span> <span class="control-val" id="val-autoDur">3.0s</span></div>
-                <input type="range" id="param-autoDur" min="1" max="10" step="0.5" value="3">
-            </div>
-            <div class="control-group">
-                <div class="control-label"><span>Arrow Spacing (LR)</span> <span class="control-val" id="val-arrowPad">40px</span></div>
-                <input type="range" id="param-arrowPad" min="10" max="200" step="1" value="40">
-            </div>
-            <div class="control-group">
-                <div class="control-label"><span>Pill Bottom Margin</span> <span class="control-val" id="val-pillBottom">40px</span></div>
-                <input type="range" id="param-pillBottom" min="10" max="250" step="1" value="40">
-            </div>
+            <details class="settings-section">
+                <summary class="section-header">Interface & Timing</summary>
+                <div class="section-body">
+                    <div class="control-group">
+                        <div class="control-label"><span>Autoplay Timer</span> <span class="control-val" id="val-autoDur">3.0s</span></div>
+                        <input type="range" id="param-autoDur" min="1" max="10" step="0.5" value="3">
+                    </div>
+                    <div class="control-group">
+                        <div class="control-label"><span>Arrow Spacing (LR)</span> <span class="control-val" id="val-arrowPad">40px</span></div>
+                        <input type="range" id="param-arrowPad" min="10" max="200" step="1" value="40">
+                    </div>
+                    <div class="control-group">
+                        <div class="control-label"><span>Pill Bottom Margin</span> <span class="control-val" id="val-pillBottom">40px</span></div>
+                        <input type="range" id="param-pillBottom" min="10" max="250" step="1" value="40">
+                    </div>
+                </div>
+            </details>
 
-            <hr>
-            <div class="control-label" style="color:var(--text-main); margin-bottom:12px;">Audio Synthesis</div>
-            <div class="control-group">
-                <div class="control-label"><span>Pitch Start (Hz)</span> <span class="control-val" id="val-audioHigh">140</span></div>
-                <input type="range" id="param-audioHigh" min="50" max="1000" step="10" value="140">
-            </div>
-            <div class="control-group">
-                <div class="control-label"><span>Pitch End (Hz)</span> <span class="control-val" id="val-audioLow">40</span></div>
-                <input type="range" id="param-audioLow" min="10" max="500" step="10" value="40">
-            </div>
-            <div class="control-group">
-                <div class="control-label"><span>Duration (ms)</span> <span class="control-val" id="val-audioDur">40</span></div>
-                <input type="range" id="param-audioDur" min="10" max="200" step="1" value="40">
-            </div>
+            <details class="settings-section">
+                <summary class="section-header">Audio Synthesis</summary>
+                <div class="section-body">
+                    <div class="control-group">
+                        <div class="control-label"><span>Pitch Start (Hz)</span> <span class="control-val" id="val-audioHigh">140</span></div>
+                        <input type="range" id="param-audioHigh" min="50" max="1000" step="10" value="140">
+                    </div>
+                    <div class="control-group">
+                        <div class="control-label"><span>Pitch End (Hz)</span> <span class="control-val" id="val-audioLow">40</span></div>
+                        <input type="range" id="param-audioLow" min="10" max="500" step="10" value="40">
+                    </div>
+                    <div class="control-group">
+                        <div class="control-label"><span>Duration (ms)</span> <span class="control-val" id="val-audioDur">40</span></div>
+                        <input type="range" id="param-audioDur" min="10" max="200" step="1" value="40">
+                    </div>
+                </div>
+            </details>
 
-            <hr>
-            <label class="upload-global-btn">
-                + Upload Images / Videos
-                <input type="file" id="global-upload" multiple accept="image/*,video/*">
-            </label>
-            <div class="media-grid" id="media-grid"></div>
+            <details class="settings-section">
+                <summary class="section-header">Media</summary>
+                <div class="section-body">
+                    <label class="upload-global-btn">
+                        + Upload Images / Videos
+                        <input type="file" id="global-upload" multiple accept="image/*,video/*">
+                    </label>
+                    <div class="media-grid" id="media-grid"></div>
+                </div>
+            </details>
         </div>
     </div>
 
