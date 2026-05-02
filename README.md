@@ -4,14 +4,14 @@ An interactive 3D media carousel rendered in WebGL. Images and videos sit on the
 
 ## What it does
 
-- **WebGL rendering** with three.js. A custom vertex shader bends each plane around a cylinder; a fragment shader handles object-fit-contain letterboxing and rounded-corner SDF clipping per face.
-- **Active face flattening**: on idle the front-facing card unbends to a flat plane; during motion all cards bend back into the cylinder.
-- **Animation** via framer-motion (`animate`), with custom cubic-bezier easings for rotation, opacity, and bend.
-- **Autoplay** with a progress fill rendered inside the active pagination dot. Pauses during interaction; toggle button switches between play and pause icons.
-- **Drag-to-rotate** on the active face (raycaster-gated), with snap-to-nearest on release.
+- **WebGL rendering** with three.js. A custom vertex shader curves each plane around a cylinder; a fragment shader handles object-fit-contain letterboxing and rounded-corner SDF clipping per face.
+- **Image and video faces**: each carousel slot accepts either a static image or a looping `VideoTexture`, with aspect ratio detected from the source and letterboxed in-shader.
+- **Animation** via framer-motion (`animate`): spring-physics rotation on snap, with custom cubic-bezier easing on the autoplay fill.
+- **Autoplay** with a progress fill rendered inside the active pagination dot. The fill starts the instant the active dot begins widening (in parallel with the rotation spring) rather than after settle. Pauses during interaction; toggle button switches between play and pause icons.
+- **Drag-to-rotate** on the canvas with snap-to-nearest face on release.
 - **Keyboard nav**: ArrowLeft / ArrowRight.
 - **Synth click** on arrow/keyboard navigation: a layered Web Audio click (filtered noise tick + tunable triangle-wave body).
-- **Settings panel** (gear icon, bottom-left) with live controls for camera distance, max height, cylinder radius, corner radius, autoplay timer, UI spacing, and audio synthesis parameters.
+- **Settings panel** (gear icon, bottom-left) with collapsible sub-sections — Geometry & Camera, Interface & Timing, Audio Synthesis, and Media — and live controls for camera distance, max height, padding, corner radius, autoplay timer, UI spacing (arrow inset, pill bottom margin), and audio synthesis parameters (pitch start/end, duration).
 - **Content manager**: upload local images/videos (multi-select), thumbnail grid, per-item delete. Defaults restore when the list empties.
 
 ## Files
