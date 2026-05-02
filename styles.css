@@ -190,7 +190,7 @@ canvas:active { cursor: grabbing; }
     font-size: 16px;
     font-weight: 600;
     color: var(--text-main);
-    margin: 0 0 20px 0;
+    margin: 0 0 8px 0;
     letter-spacing: -0.3px;
 }
 .panel-scroll {
@@ -198,6 +198,51 @@ canvas:active { cursor: grabbing; }
     padding-right: 4px;
     margin-right: -4px;
 }
+
+/* Collapsible Sections */
+.settings-section {
+    border-top: 1px solid rgba(0,0,0,0.07);
+}
+.settings-section:first-child { border-top: none; }
+
+.section-header {
+    list-style: none;
+    cursor: pointer;
+    padding: 14px 2px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-main);
+    letter-spacing: -0.2px;
+    user-select: none;
+    transition: opacity 0.15s ease;
+    outline: none;
+}
+.section-header::-webkit-details-marker { display: none; }
+.section-header::marker { content: ''; }
+.section-header:hover { opacity: 0.6; }
+
+.section-header::after {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-right: 1.5px solid var(--text-muted);
+    border-bottom: 1.5px solid var(--text-muted);
+    border-radius: 1px;
+    transform: rotate(45deg) translate(-2px, -2px);
+    transition: transform 0.25s ease;
+}
+.settings-section[open] > .section-header::after {
+    transform: rotate(-135deg) translate(-2px, -2px);
+}
+
+.section-body {
+    padding: 4px 2px 18px 2px;
+}
+.section-body > .control-group:last-child { margin-bottom: 0; }
+.section-body > .upload-global-btn + .media-grid:empty { margin-top: 0; }
 
 .control-group { margin-bottom: 16px; }
 .control-label {

@@ -28,6 +28,8 @@ let autoplayAnim = null;
 
 // --- Autoplay State ---
 let isAutoplayPaused = false;
+let autoplayRunning = false;
+let lastActiveIdx = -1;
 
 const svgPlay = `<svg viewBox="0 0 24 24"><path d="M5 3l14 9-14 9V3z"/></svg>`;
 const svgPause = `<svg viewBox="0 0 24 24"><path d="M6 4h4v16H6zm8 0h4v16h-4z"/></svg>`;
@@ -46,6 +48,7 @@ document.getElementById('autoplay-toggle').onclick = () => {
 
 function stopAutoplay() {
     if (autoplayAnim) autoplayAnim.stop();
+    autoplayRunning = false;
     document.querySelectorAll('.dot .progress').forEach(p => p.style.width = '0%');
 }
 
@@ -56,11 +59,12 @@ function startAutoplay() {
     const activeProgress = document.querySelector('.dot.active .progress');
     if (!activeProgress) return;
 
+    autoplayRunning = true;
     autoplayAnim = animate(0, 100, {
         duration: config.autoDur,
         ease: [0.4, 0.0, 0.2, 1],
         onUpdate: (v) => { activeProgress.style.width = `${v}%`; },
-        onComplete: () => { animateTo(currentTargetIndex - 1); }
+        onComplete: () => { autoplayRunning = false; animateTo(currentTargetIndex - 1); }
     });
 }
 
@@ -274,13 +278,17 @@ function updateUI() {
             dot.querySelector('.progress').style.width = '0%';
         }
     });
+    if (visualIdx !== lastActiveIdx) {
+        lastActiveIdx = visualIdx;
+        if (!isDragging && !isAutoplayPaused) startAutoplay();
+    }
 }
 
 function setVisualState(moving) {
     isMoving = moving;
     if (moving) {
         stopAutoplay();
-    } else {
+    } else if (!autoplayRunning) {
         startAutoplay();
     }
 }
