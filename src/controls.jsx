@@ -5,15 +5,15 @@ import { setters, defaults } from './carousel.js';
 export function CarouselControls() {
     const p = useDialKit('Carousel', {
         geometry: {
-            cameraZ: [defaults.cameraZ, 1, 40, 0.5],
-            height: [defaults.height, 1, 5, 0.1],
-            padding: [defaults.padding, 0, 5, 0.05],
+            cameraZ: [defaults.cameraZ, 1, 80, 0.5],
+            height: [defaults.height, 1, 10, 0.1],
+            padding: [defaults.padding, 0, 10, 0.05],
             cornerRadius: [defaults.cornerRadius, 0, 0.5, 0.01]
         },
         timing: {
-            autoDur: [defaults.autoDur, 1, 10, 0.5],
+            autoDur: [defaults.autoDur, 1, 10, 0.1],
             arrowPad: [defaults.arrowPad, 10, 200, 1],
-            pillBottom: [defaults.pillBottom, 10, 250, 1]
+            pillBottom: [defaults.pillBottom, 10, 300, 1]
         },
         audio: {
             audioHigh: [defaults.audioHigh, 50, 1000, 10],
