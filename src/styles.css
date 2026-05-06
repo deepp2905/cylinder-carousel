@@ -4,7 +4,6 @@
     --glass-border: rgba(255, 255, 255, 0.6);
     --ui-dark: #1D1D1F;
     --text-main: #111111;
-    --text-muted: #888888;
     --dot-inactive: rgba(0, 0, 0, 0.15);
 
     /* Dynamic UI Positioning Variables */
@@ -199,95 +198,7 @@ canvas:active { cursor: grabbing; }
     margin-right: -4px;
 }
 
-/* Collapsible Sections */
-.settings-section {
-    border-top: 1px solid rgba(0,0,0,0.07);
-}
-.settings-section:first-child { border-top: none; }
-
-.section-header {
-    list-style: none;
-    cursor: pointer;
-    padding: 14px 2px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-main);
-    letter-spacing: -0.2px;
-    user-select: none;
-    transition: opacity 0.15s ease;
-    outline: none;
-}
-.section-header::-webkit-details-marker { display: none; }
-.section-header::marker { content: ''; }
-.section-header:hover { opacity: 0.6; }
-
-.section-header::after {
-    content: '';
-    width: 7px;
-    height: 7px;
-    border-right: 1.5px solid var(--text-muted);
-    border-bottom: 1.5px solid var(--text-muted);
-    border-radius: 1px;
-    transform: rotate(45deg) translate(-2px, -2px);
-    transition: transform 0.25s ease;
-}
-.settings-section[open] > .section-header::after {
-    transform: rotate(-135deg) translate(-2px, -2px);
-}
-
-.section-body {
-    padding: 4px 2px 18px 2px;
-}
-.section-body > .control-group:last-child { margin-bottom: 0; }
-.section-body > .upload-global-btn + .media-grid:empty { margin-top: 0; }
-
-.control-group { margin-bottom: 16px; }
-.control-label {
-    display: flex;
-    justify-content: space-between;
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--text-muted);
-    margin-bottom: 8px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-.control-val {
-    color: var(--text-main);
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-}
-
-input[type="range"] {
-    -webkit-appearance: none;
-    width: 100%;
-    height: 6px;
-    background: rgba(0,0,0,0.08);
-    border-radius: 10px;
-    outline: none;
-    margin: 6px 0;
-}
-input[type="range"]::-webkit-slider-thumb,
-input[type="range"]::-moz-range-thumb {
-    -webkit-appearance: none;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    border: none;
-    background: #fff;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05);
-    cursor: grab;
-    transition: transform 0.1s;
-}
-input[type="range"]::-webkit-slider-thumb:active,
-input[type="range"]::-moz-range-thumb:active { transform: scale(0.9); cursor: grabbing; }
-
-hr { border: none; border-top: 1px solid rgba(0,0,0,0.08); margin: 20px 0; }
-
-/* Content Manager */
+/* Media Panel */
 .upload-global-btn {
     display: block;
     width: 100%;
