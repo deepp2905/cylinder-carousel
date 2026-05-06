@@ -11,35 +11,32 @@ An interactive 3D media carousel rendered in WebGL. Images and videos sit on the
 - **Drag-to-rotate** on the canvas with snap-to-nearest face on release.
 - **Keyboard nav**: ArrowLeft / ArrowRight.
 - **Synth click** on arrow/keyboard navigation: a layered Web Audio click (filtered noise tick + tunable triangle-wave body).
-- **Settings panel** (gear icon, bottom-left) with collapsible sub-sections — Geometry & Camera, Interface & Timing, Audio Synthesis, and Media — and live controls for camera distance, max height, padding, corner radius, autoplay timer, UI spacing (arrow inset, pill bottom margin), and audio synthesis parameters (pitch start/end, duration).
-- **Content manager**: upload local images/videos (multi-select), thumbnail grid, per-item delete. Defaults restore when the list empties.
+- **DialKit control panel** (floating, bottom-right) with grouped folders — Geometry, Timing, and Audio — driving camera distance, max height, padding, corner radius, autoplay timer, UI spacing (arrow inset, pill bottom margin), and audio synthesis parameters (pitch start/end, duration). Sliders support click-to-snap, drag with rubber-band, and direct text editing.
+- **Media panel** (image icon, bottom-left): upload local images/videos (multi-select), thumbnail grid, per-item delete. Defaults restore when the list empties.
 
 ## Files
 
-- `index.html` — markup, importmap (three, framer-motion via esm.sh).
-- `styles.css` — glass UI, settings panel, pagination dots with progress fill.
-- `carousel.js` — three.js scene, shaders, animation, autoplay, audio, and parameter wiring.
+- `index.html` — markup, Vite entry.
+- `src/main.jsx` — React entry; mounts `DialRoot` and the bridge component, then loads the carousel module.
+- `src/controls.jsx` — `useDialKit` config; pushes values into the carousel via exported setters.
+- `src/carousel.js` — three.js scene, shaders, animation, autoplay, audio, media uploader; exports `setters`/`defaults` for the dial panel.
+- `src/styles.css` — glass UI, media panel, pagination dots with progress fill.
 
 ## Running locally
 
-The project uses native ES modules and an importmap, so it must be served over HTTP — opening `index.html` directly with `file://` will not work.
-
-Pick any one of these from the project directory:
-
 ```bash
-# Python
-python -m http.server 8000
-
-# Node (npx)
-npx serve
-
-# VS Code
-# Install "Live Server" extension, then right-click index.html → "Open with Live Server"
+npm install
+npm run dev
 ```
 
-Then open `http://localhost:8000` (or whatever port the server reports).
+Vite opens `http://localhost:5173/` automatically.
 
-No build step, no package install — dependencies (three, framer-motion) are loaded from CDNs via the importmap in `index.html`.
+To produce a static build:
+
+```bash
+npm run build
+npm run preview
+```
 
 ## Browser support
 
