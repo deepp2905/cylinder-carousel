@@ -2,7 +2,13 @@
 
 An interactive 3D media carousel rendered in WebGL. Images and videos sit on the faces of a cylinder; the active face flattens into a 2D card while inactive faces curve around the back. Drag, click, autoplay, and keyboard navigation all snap to the nearest face.
 
-https://github.com/deepp2905/cylinder-carousel/raw/main/final.mp4
+
+
+https://github.com/user-attachments/assets/ee683b6e-11db-4132-acc5-17e66d1b0010
+
+
+
+
 
 ## What it does
 
