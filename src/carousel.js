@@ -3,9 +3,9 @@ import { animate } from 'framer-motion';
 
 // --- Config Engine ---
 const config = {
-    count: 8, height: 2.2, aspect: 16/9, radius: 4.0, padding: 0.3, cameraZ: 12,
-    cornerRadius: 0.05, audioHigh: 140, audioLow: 40, audioDur: 0.04,
-    autoDur: 3.0
+    count: 8, height: 2.4, aspect: 16/9, radius: 4.0, padding: 2.4, cameraZ: 12,
+    cornerRadius: 0.12, audioHigh: 140, audioLow: 40, audioDur: 0.04,
+    autoDur: 1.6
 };
 
 const defaultTemplates = [

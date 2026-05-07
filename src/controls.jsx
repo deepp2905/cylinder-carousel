@@ -12,7 +12,7 @@ export function CarouselControls() {
         },
         timing: {
             autoDur: [defaults.autoDur, 1, 10, 0.1],
-            arrowPad: [defaults.arrowPad, 10, 200, 1],
+            arrowPad: [defaults.arrowPad, 10, 400, 1],
             pillBottom: [defaults.pillBottom, 10, 300, 1]
         },
         audio: {
